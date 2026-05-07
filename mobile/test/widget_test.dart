@@ -4,6 +4,7 @@ import 'package:mobile_antrian/app/app_controller.dart';
 import 'package:mobile_antrian/core/api/api_client.dart';
 import 'package:mobile_antrian/core/auth/token_store.dart';
 import 'package:mobile_antrian/features/auth/presentation/login_page.dart';
+import 'package:mobile_antrian/features/diagnostics/presentation/diagnostics_page.dart';
 import 'package:mobile_antrian/features/operator_queue/domain/operator_models.dart';
 
 class MemoryTokenStore implements TokenStore {
@@ -90,6 +91,60 @@ void main() {
     expect(find.text('Console operator loket'), findsOneWidget);
     expect(find.byType(TextFormField), findsNWidgets(2));
     expect(find.text('Login'), findsOneWidget);
+
+    controller.dispose();
+  });
+
+  testWidgets('Diagnostics logout clears session and returns to root route', (
+    tester,
+  ) async {
+    final tokenStore = MemoryTokenStore()..token = 'stored-token';
+    final controller = AppController(
+      apiClient: ApiClient(baseUrl: 'http://localhost/api/mobile/v1'),
+      tokenStore: tokenStore,
+    );
+    controller.sessionStatus = SessionStatus.authenticated;
+    controller.user = const OperatorUser(
+      id: 1,
+      name: 'Operator',
+      email: 'operator@example.test',
+      role: 'operator',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DiagnosticsPage(controller: controller),
+                      ),
+                    );
+                  },
+                  child: const Text('Open diagnostics'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics'), findsOneWidget);
+
+    await tester.tap(find.text('Logout'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open diagnostics'), findsOneWidget);
+    expect(controller.sessionStatus, SessionStatus.unauthenticated);
+    expect(tokenStore.token, isNull);
 
     controller.dispose();
   });

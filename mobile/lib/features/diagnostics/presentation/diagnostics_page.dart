@@ -44,7 +44,13 @@ class DiagnosticsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: controller.logout,
+            onPressed: () async {
+              await controller.logout();
+
+              if (context.mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
             icon: const Icon(Icons.logout),
             label: const Text('Logout'),
           ),

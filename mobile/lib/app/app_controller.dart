@@ -119,6 +119,11 @@ class AppController extends ChangeNotifier {
     user = null;
     state = null;
     history = [];
+    isLoading = false;
+    isActionPending = false;
+    isOffline = false;
+    errorMessage = null;
+    lastSync = null;
     sessionStatus = SessionStatus.unauthenticated;
     notifyListeners();
   }
